@@ -1,0 +1,11 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint", "prettier"],
+  "extends": ["strongloop", "prettier"],
+  "rules": {
+    "camelcase": "off",
+    "prettier/prettier": 2,
+    "strict": "off"
+  }
+}

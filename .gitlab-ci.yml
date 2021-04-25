@@ -1,0 +1,82 @@
+# # This file is a template, and might need editing before it works on your project.
+# # GitLab Serverless template
+
+image: docker:latest
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+
+stages:
+  - build
+  - precheck
+  - test
+  - deploy
+
+build-docker-image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+    - docker build --pull -t "$CI_REGISTRY_IMAGE" -f Dockerfile.gitlab . 
+    - docker push "$CI_REGISTRY_IMAGE"
+  only:
+    changes:
+      - Dockerfile.gitlab
+
+has_lock_files:
+  stage: precheck
+  script:
+    - "if [[ -e 'package.json' &&  ! -e 'yarn.lock' ]]; then echo 'No lock file found. Please add a yarn.lock file'; false; fi"
+
+security_checker:
+  stage: precheck
+  image: $CI_REGISTRY_IMAGE:latest
+  script:
+    - yarn test:audit --audit-level=moderate
+
+eslint:
+  stage: precheck
+  image: $CI_REGISTRY_IMAGE:latest
+  script:
+    - yarn install
+    - yarn lint-and-format
+
+tests:
+  stage: test
+  image: $CI_REGISTRY_IMAGE:latest
+  script:
+    - yarn install
+    - yarn test
+
+build:
+  stage: test
+  image: $CI_REGISTRY_IMAGE:latest
+  script:
+    - yarn install
+    - yarn build
+
+staging_deploy:
+  stage: deploy
+  image: $CI_REGISTRY_IMAGE:latest
+  only:
+    - dev
+  script:
+    - yarn install
+    - cd / && serverless config credentials --provider aws --key $AWS_ACCESS_KEY_ID --secret $AWS_SECRET_ACCESS_KEY && cd -
+    - SLS_DEBUG=* serverless --stage stage
+    - for r in $DEPLOY_REGIONS; do SLS_DEBUG=* serverless deploy --verbose --force --stage stage --region $r; done
+
+production_deploy:
+  stage: deploy
+  image: $CI_REGISTRY_IMAGE:latest
+  only:
+    - master
+  script:
+    - yarn install
+    - cd / && serverless config credentials --provider aws --key $AWS_ACCESS_KEY_ID --secret $AWS_SECRET_ACCESS_KEY && cd -
+    - SLS_DEBUG=* serverless --stage prod
+    - for r in $DEPLOY_REGIONS; do SLS_DEBUG=* serverless deploy --verbose --force --stage prod --region $r; done
