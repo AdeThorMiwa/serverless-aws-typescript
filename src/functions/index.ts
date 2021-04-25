@@ -1,6 +1,4 @@
-import {
-  getHello,
-} from './hello';
+import { getHello } from './hello';
 
 export default {
   getHello
