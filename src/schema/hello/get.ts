@@ -1,6 +1,6 @@
 export default {
   type: 'object',
   properties: {
-    id: 'string'
+    id: { type: 'string'}
   }
 } as const;

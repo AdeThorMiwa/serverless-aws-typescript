@@ -18,7 +18,7 @@ const fn: ValidatedEventAPIGatewayProxyEvent<typeof schema, 'body'> = async (
       })
     );
   } catch (e) {
-    throw new createError.BadRequest('Something went horribly wrong!');
+    throw new createError.BadRequest(e.message);
   }
 };
 

@@ -11,7 +11,9 @@
     "lint": "eslint . --ext .ts",
     "lint-and-fix": "eslint . --ext .ts --fix",
     "lint-and-format": "yarn lint-and-fix && yarn format",
-    "test:audit": "chmod +rx run-yarn-audit.sh && ./run-yarn-audit.sh -f yarn-audit-known-issues"
+    "test:audit": "chmod +rx run-yarn-audit.sh && ./run-yarn-audit.sh -f yarn-audit-known-issues",
+    "install:dynamo": "sls dynamodb install",
+    "postinstall": "yarn install:dynamo"
   },
   "engines": {
     "node": ">=14.15.0"
