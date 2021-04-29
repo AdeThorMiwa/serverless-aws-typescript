@@ -3,34 +3,42 @@ import { handlerPathFromLibs } from '@util/handlerResolver';
 
 const generateEvent = (opts: {
   path: string;
-  method: 'get' | 'post' | 'put' | 'patch' | 'delete';
+  method?: 'get' | 'post' | 'put' | 'patch' | 'delete';
   schema?: unknown;
+  [key: string]: unknown;
 }): {
   handler: string;
-  events: { http: { method: string; path: string; [key: string]: unknown } }[];
+  events?: { http: { method: string; path: string; [key: string]: unknown } }[];
 } => {
-  const [base, pathname] = opts.path.split('.');
+  const { path, method, schema, ...rest } = opts;
+  const [base, pathname] = path.split('.');
   let request;
-  if (opts.method !== 'get') {
+  if (method !== 'get') {
     request = {
       schema: {
-        'application/json': opts.schema
+        'application/json': schema
       }
     };
   }
 
-  return {
-    handler: `${handlerPathFromLibs(__dirname, base)}/${pathname}.handler`,
-    events: [
+  const generated = {
+    handler: `${handlerPathFromLibs(__dirname, base)}/${pathname}.handler`
+  };
+
+  if (method) {
+    generated['events'] = [
       {
         http: {
-          method: opts.method,
+          method: method,
           path: pathname,
-          request
+          request,
+          ...rest
         }
       }
-    ]
-  };
+    ];
+  }
+
+  return generated;
 };
 
 export default generateEvent;
